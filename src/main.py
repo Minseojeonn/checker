@@ -8,7 +8,8 @@ from utils import set_random_seed
 from utils import log_param
 from dataloader.dataset_class import data_adapter
 from loguru import logger
-
+from models.LightGCN.LightGCN import LightGCN
+from checker.src.models.LightGCN.LightGCN_Trainer import run_lightgcn
 
 def main(
         model='LightGcn',
@@ -68,10 +69,10 @@ def main(
     log_param(hyper_param)
 
     #eval
-    eval_dict = {"sdgnn":SDGNNeval}
+    eval_dict = {"lightgcn":LightGCN}
     evaluator = eval_dict[model.lower()](device=device)
     
-    model_dict = {"sdgnn":run_sdgnn}
+    model_dict = {"lightgcn":run_lightgcn}
     if model.lower() not in model_dict:
         raise Exception("not supported model.")
     
