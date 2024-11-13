@@ -32,32 +32,6 @@ def log_param(param):
             logger.info('{:20}:{:>50}'.format(key, '{}'.format(value)))
 
 
-def build_adj_matrix_uni_to_bi(train_data): #gowalla용으로 하드코딩 된것이라서, 나중에 다 바꿔줘야함
-    train_data_tensor = torch.tensor(train_data).clone().t()
-    indices = train_data_tensor[:2]
-    indices[-1] = indices[-1]-29858
-    values = torch.ones(indices.shape[-1], dtype=torch.long)
-    bipartite_train_adj = torch.sparse_coo_tensor(indices, values, (29858, 40981)) #하드코딩 나중에 제거해야함.
-    indices = bipartite_train_adj._indices().numpy()
-    values = bipartite_train_adj._values().numpy()
-    size = bipartite_train_adj.size()
-    return scipy.sparse.coo_matrix((values, (indices[0], indices[1])), shape=size)
 
-def data_split():
-    """
-    Split the dataset into train, validation, and test set
-    """
-    if self.shuffle:
-        self.preprocessed_data = self.preprocessed_data.sample(frac=1, random_state=self.seed).reset_index(drop=True)
-    
-    train_size = int(len(self.preprocessed_data) * self.train_ratio)
-    val_size = int(len(self.preprocessed_data) * self.val_ratio)
-    
-    train_data = self.preprocessed_data[:train_size]
-    val_data = self.preprocessed_data[train_size:train_size+val_size]
-    test_data = self.preprocessed_data[train_size+val_size:]
-    
-    self.train_data = train_data
-    self.val_data = val_data
-    self.test_data = test_data
+ 
     

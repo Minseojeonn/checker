@@ -24,7 +24,8 @@ class movielens_1m(template):
             test_ratio=param["split_ratio"][2],
             shuffle=param["shuffle"],
             seed=param["seed"],
-            device=param["device"]
+            device=param["device"],
+            model=param["model"]
         )
         
     def data_preprocessing(self):

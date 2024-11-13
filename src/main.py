@@ -11,7 +11,7 @@ from loguru import logger
 
 
 def main(
-        model='SDGNN',
+        model='LightGcn',
         seed=1,
         epochs=100,
         learning_rate=0.001,
@@ -44,11 +44,6 @@ def main(
     param['seed'] = seed
     param['device'] = device
     param['dataset'] = dataset
-    param['in_dim'] = in_dim
-    param['out_dim'] = out_dim
-    param['layer_num'] = layer_num
-    param['epochs'] = epochs
-    param['learning_rate'] = learning_rate
     param['split_ratio'] = [train_ratio, val_ratio, test_ratio]
     param['shuffle'] = shuffle
 
