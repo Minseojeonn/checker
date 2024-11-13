@@ -6,7 +6,7 @@ import torch
 from pathlib import Path
 from utils import set_random_seed
 from utils import log_param
-from dataloader.utils import dataAdaper
+from dataloader.dataset_class import data_adapter
 from loguru import logger
 
 
@@ -16,11 +16,14 @@ def main(
         epochs=100,
         learning_rate=0.001,
         device='cuda:0',
-        dataset="gowalla",
-        data_path="../data/gowalla",
+        dataset="ml-1m",
         in_dim=20,
         out_dim=20,
-        layer_num=3
+        layer_num=3,
+        train_ratio=0.8,
+        val_ratio=0.1,
+        test_ratio=0.1,
+        shuffle=True
     ):
     """
     Handle user arguments of ml-project-template
@@ -40,16 +43,25 @@ def main(
     param['model'] = model
     param['seed'] = seed
     param['device'] = device
+    param['dataset'] = dataset
+    param['in_dim'] = in_dim
+    param['out_dim'] = out_dim
+    param['layer_num'] = layer_num
+    param['epochs'] = epochs
+    param['learning_rate'] = learning_rate
+    param['split_ratio'] = [train_ratio, val_ratio, test_ratio]
+    param['shuffle'] = shuffle
+
+
     log_param(param)
 
     # Step 1. Load datasets
-    dataset_list = ["gowalla"]
+    dataset_list = ["ml-1m"]
     if dataset.lower() not in dataset_list:
         raise Exception("not supported dataset.")
-    data = dataAdaper(dataset.lower()) 
+    loaded_data = data_adapter(dataset.lower())(param)
+    breakpoint()
 
-
-    ----------------------------
     # Step 2. Run (train and evaluate) the specified model
     logger.info("Training the model has begun with the following hyperparameters:")
     hyper_param = dict()

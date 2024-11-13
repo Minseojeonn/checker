@@ -1,0 +1,2 @@
+./src/processed_data/*
+*.pkl

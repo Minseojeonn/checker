@@ -43,5 +43,21 @@ def build_adj_matrix_uni_to_bi(train_data): #gowalla용으로 하드코딩 된�
     size = bipartite_train_adj.size()
     return scipy.sparse.coo_matrix((values, (indices[0], indices[1])), shape=size)
 
-
+def data_split():
+    """
+    Split the dataset into train, validation, and test set
+    """
+    if self.shuffle:
+        self.preprocessed_data = self.preprocessed_data.sample(frac=1, random_state=self.seed).reset_index(drop=True)
+    
+    train_size = int(len(self.preprocessed_data) * self.train_ratio)
+    val_size = int(len(self.preprocessed_data) * self.val_ratio)
+    
+    train_data = self.preprocessed_data[:train_size]
+    val_data = self.preprocessed_data[train_size:train_size+val_size]
+    test_data = self.preprocessed_data[train_size+val_size:]
+    
+    self.train_data = train_data
+    self.val_data = val_data
+    self.test_data = test_data
     

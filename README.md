@@ -1,3 +1,1 @@
-# VNE + Sign dataset implement and test
-
-## VNE Implement using pytorch
+# checker for Link prediction
