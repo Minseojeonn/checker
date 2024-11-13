@@ -40,7 +40,8 @@ class template(object):
         raise NotImplementedError
 
     def read_dataset(self, file_dir) -> dict:
-        
+        #Depend on dataset format 
+        #abstract method
         raise NotImplementedError
 
     def save(self) -> None:
