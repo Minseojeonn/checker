@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from loguru import logger
 from sklearn.metrics import roc_auc_score
+import multiprocessing
 
 def set_random_seed(seed, device):
     # for reproducibility (always not guaranteed in pytorch)
@@ -39,44 +40,74 @@ def minibatch(*tensors, batch_size):
         for i in range(0, len(tensors[0]), batch_size):
             yield tuple(x[i:i + batch_size] for x in tensors)
 
-def batch_uniform_random_sampling_optimized(user_ids, pos_items, user_interactions, num_items, num_samples=1):
+import numpy as np
+import torch
+from multiprocessing import Pool
+
+def generate_negative_samples_for_user(user_id, user_interactions, all_items, num_samples):
+    """
+    단일 유저에 대해 negative samples를 생성하는 함수
+    """
+    interacted_items = set(user_interactions.get(user_id, []))
+    negative_candidates = list(all_items - interacted_items)
+    
+    # Negative candidates가 num_samples보다 적을 경우 예외 처리
+    if len(negative_candidates) < num_samples:
+        raise ValueError(f"유저 {user_id}에 대해 가능한 negative sampling 개수가 부족합니다. "
+                         f"가능한 아이템 수: {len(negative_candidates)}")
+    
+    # Negative samples를 무작위로 선택
+    negative_samples = np.random.choice(negative_candidates, num_samples, replace=False)
+    
+    return user_id, negative_samples.tolist()
+
+def batch_uniform_random_sampling_optimized(user_ids, user_interactions, num_items, num_samples=1):
     """
     여러 유저에 대해 uniform random sampling으로 negative samples를 빠르게 추출하는 최적화된 함수입니다.
     
     Parameters:
     - user_ids (list): negative sampling을 할 대상 유저 ID 리스트
-    - pos_items (list): pos items
     - user_interactions (dict): 유저별 상호작용 아이템 dictionary, {user_id: [item1, item2, ...]}
-    - num_items (int): 전체 아이템 개수
+    - all_items (set): 전체 아이템 ID의 집합
     - num_samples (int): 각 유저별 추출할 negative sample의 개수
     
     Returns:
     - batch_negative_samples (dict): {user_id: [negative sample 리스트]} 형태의 dictionary
     """
+    batch_negative_samples = {}
+    all_items = set(range(num_items))
+
+    # 멀티프로세싱을 사용하여 병렬 처리
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        # 각 유저별로 negative 샘플링을 병렬로 수행
+        try:
+            results = pool.starmap(generate_negative_samples_for_user, 
+                                  [(user_id, user_interactions, all_items, num_samples) for user_id in user_ids])
+        except ValueError as e:
+            print(f"에러 발생: {e}")
+            return None, None, None
+        
+        # 결과를 dict 형태로 변환
+        for user_id, negative_samples in results:
+            batch_negative_samples[user_id] = negative_samples
+    
+    # 샘플들을 새로운 리스트로 변환
     new_neg_items = []
     new_pos_items = []
     new_user_ids = []
-    all_items = set([i for i in range(num_items)])
-    for user_id, pos_item_id in zip(user_ids, pos_items):
-        # 유저가 상호작용한 아이템 집합을 미리 계산
-        interacted_items = set(user_interactions.get(user_id, []))
-        negative_candidates = list(all_items - interacted_items)
+    for user_id in user_ids:
+        pos_items = user_interactions.get(user_id, [])
         
-        # 유저별 샘플링 수행 (벡터화된 numpy 연산 사용)
-        if len(negative_candidates) < num_samples:
-            raise ValueError(f"유저 {user_id}에 대해 가능한 negative sampling 개수가 부족합니다.")
-            
-        # Negative samples를 무작위로 선택
-        negative_samples = np.random.choice(negative_candidates, num_samples, replace=False)
-        
-        # 결과 저장
-        for neg_item_id in negative_samples.tolist():
-            new_user_ids.append(user_id)
-            new_pos_items.append(pos_item_id)
-            new_neg_items.append(neg_item_id)
+        for pos_item in pos_items:
+            new_user_ids.extend([user_id] * num_samples)
+            new_pos_items.extend([pos_item] * num_samples)
+            new_neg_items.extend(batch_negative_samples[user_id])
+    
+    # Torch tensor로 변환
     new_pos_items = torch.LongTensor(new_pos_items)
     new_neg_items = torch.LongTensor(new_neg_items)
     new_user_ids = torch.LongTensor(new_user_ids)
+    
     return new_user_ids, new_pos_items, new_neg_items
 
 

@@ -20,4 +20,4 @@ def convert_list_in_dict_to_tensor(list_in_dict, device):
     for li in list_in_dict:
         list_in_dict[li] = torch.tensor(list_in_dict[li], device=device)    
         
-    
+    return list_in_dict

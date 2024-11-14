@@ -21,8 +21,8 @@ class BasicModel(nn.Module):
     
 class LightGCN(BasicModel):
     def __init__(self, 
-                config:dict,
-                dataset:object 
+                config: dict,
+                dataset: object,
                 ):
         super(LightGCN, self).__init__()
         self.config = config
@@ -30,29 +30,17 @@ class LightGCN(BasicModel):
         self.__init_weight()
 
     def __init_weight(self):
-        self.num_users  = self.dataset.num_users
-        self.num_items  = self.dataset.num_items
+        self.num_items = self.dataset.num_items
+        self.num_users = self.dataset.num_users
         self.latent_dim = self.config['out_dim']
         self.n_layers = self.config['layer_num']
-        self.keep_prob = self.config['dropout_keep_prob']
         self.embedding_user = torch.nn.Embedding(
             num_embeddings=self.num_users, embedding_dim=self.latent_dim)
         self.embedding_item = torch.nn.Embedding(
             num_embeddings=self.num_items, embedding_dim=self.latent_dim)
         self.f = nn.Sigmoid()
-        self.Graph = self.dataset.getSparseGraph()
+        self.Graph = self.dataset.getSparseGraph().to(self.config['device'])
 
-    def __dropout_x(self, x, keep_prob):
-        size = x.size()
-        index = x.indices().t()
-        values = x.values()
-        random_index = torch.rand(len(values)) + keep_prob
-        random_index = random_index.int().bool()
-        index = index[random_index]
-        values = values[random_index]/keep_prob
-        g = torch.sparse.FloatTensor(index.t(), values, size)
-        return g
-    
     def computer(self):
         """
         propagate methods for lightGCN
@@ -61,14 +49,7 @@ class LightGCN(BasicModel):
         items_emb = self.embedding_item.weight
         all_emb = torch.cat([users_emb, items_emb])
         embs = [all_emb]
-        if self.config['dropout']:
-            if self.training:
-                print("droping")
-                g_droped = self.__dropout(self.keep_prob)
-            else:
-                g_droped = self.Graph        
-        else:
-            g_droped = self.Graph    
+        g_droped = self.Graph    
         
         for layer in range(self.n_layers):
             all_emb = torch.sparse.mm(g_droped, all_emb)
@@ -116,4 +97,4 @@ class LightGCN(BasicModel):
         
         loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
         
-        return loss, reg_loss
+        return loss + 0.0001*reg_loss

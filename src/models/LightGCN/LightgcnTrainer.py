@@ -74,10 +74,11 @@ class LightgcnTrainer:
             "precision": [],
             "ndcg": []
         }
-        
+
         for epoch in range(self.epochs):
-            new_user_ids, new_pos_items, new_neg_items = batch_uniform_random_sampling_optimized(train_data["user_id"].cpu().numpy().tolist(), train_data["item_id"].cpu().numpy().tolist() ,dataset.get_all_pos_item(), dataset.num_items(), num_samples=1)
+            new_user_ids, new_pos_items, new_neg_items = batch_uniform_random_sampling_optimized(train_data["user_id"].cpu().numpy().tolist(), dataset.get_all_pos_item(), dataset.num_items, num_samples=1)
             self.model.train()
+            print(epoch)
             for (batch_i,
                 (batch_users,
                 batch_pos,
@@ -86,7 +87,7 @@ class LightgcnTrainer:
                                                 new_neg_items.to(self.device),
                                                 batch_size=self.batch_size)):
                 optimizer.zero_grad()
-                loss = self.model.bpr_loss(batch_users, batch_pos, batch_neg)
+                loss = self.model.bpr_loss(batch_users, batch_pos, batch_neg)    
                 loss.backward()
                 optimizer.step()
             
@@ -118,7 +119,7 @@ def run_lightgcn(dataset, hyper_param):
     model = trainer.train_with_hyper_param(
         dataset=dataset,
         hyper_param=hyper_param
-        )
+        ).to(hyper_param['device'])
     
     return model
 

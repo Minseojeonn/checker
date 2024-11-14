@@ -135,22 +135,22 @@ class template(object):
         # user_id, item_id each starts from 0
         """
         user_id = set(self.preprocessed_data['user_id'])
-        self.num_users = len(user_id)
         user_id = list(user_id)
         user_id2idx = {old: new for new, old in enumerate(user_id)}
+        self.num_users = len(user_id2idx)
         self.preprocessed_data['user_id'] = list(map(lambda x : user_id2idx[x], self.preprocessed_data['user_id']))
 
         item_id = set(self.preprocessed_data['item_id'])
-        self.num_items = len(item_id)
         item_id = list(item_id)
-        item_id = {old: new for new, old in enumerate(item_id)}
-        self.preprocessed_data['item_id'] = list(map(lambda x : user_id2idx[x], self.preprocessed_data['item_id']))
+        item_id2idx = {old: new for new, old in enumerate(item_id)}
+        self.num_items = len(item_id2idx)
+        self.preprocessed_data['item_id'] = list(map(lambda x : item_id2idx[x], self.preprocessed_data['item_id']))
 
-    def get_all_pos_item(self, user_id):
+    def get_all_pos_item(self):
         """
         Get all positive items for a user
         """
-        return self.user_pos_dict[user_id]
+        return self.user_pos_dict
     
     def create_sparse_graph(self, sign):
         """
@@ -166,7 +166,6 @@ class template(object):
         """
         user_dim = torch.LongTensor(self.train_data['user_id'])
         item_dim = torch.LongTensor(self.train_data['item_id'])
-        
         user_pos_dict = {i : [] for i in range(self.num_users)}
         for u, i in zip(self.train_data["user_id"], self.train_data["item_id"]):
             user_pos_dict[u].append(i)
