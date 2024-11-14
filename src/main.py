@@ -24,7 +24,9 @@ def main(
         train_ratio=0.8,
         val_ratio=0.1,
         test_ratio=0.1,
-        shuffle=True
+        dropout_keep_prob=0.6,
+        shuffle=True,
+        batch_size=1024
     ):
     """
     Handle user arguments of ml-project-template
@@ -56,7 +58,6 @@ def main(
     if dataset.lower() not in dataset_list:
         raise Exception("not supported dataset.")
     loaded_data = data_adapter(dataset.lower())(param)
-    breakpoint()
 
     # Step 2. Run (train and evaluate) the specified model
     logger.info("Training the model has begun with the following hyperparameters:")
@@ -66,21 +67,23 @@ def main(
     hyper_param['in_dim'] = in_dim
     hyper_param['out_dim'] = out_dim
     hyper_param['layer_num'] = layer_num
+    hyper_param['dropout_keep_prob'] = dropout_keep_prob
+    hyper_param['batch_size'] = batch_size
+    hyper_param['device'] = device
+    hyper_param['Ks'] = [5, 10, 15, 20]
     log_param(hyper_param)
 
     #eval
     eval_dict = {"lightgcn":LightGCN}
-    evaluator = eval_dict[model.lower()](device=device)
+    evaluator = eval_dict[model.lower()](config=hyper_param, dataset=loaded_data)
     
     model_dict = {"lightgcn":run_lightgcn}
     if model.lower() not in model_dict:
         raise Exception("not supported model.")
     
     test_recall, test_hit = model_dict[model.lower()](
-                        device=device,
                         dataset=dataset,
-                        hyper_param=hyper_param,
-                        evaluator=evaluator
+                        hyper_param=hyper_param
                     )
 
 

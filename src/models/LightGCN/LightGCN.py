@@ -21,19 +21,20 @@ class BasicModel(nn.Module):
     
 class LightGCN(BasicModel):
     def __init__(self, 
-                config:dict 
+                config:dict,
+                dataset:object 
                 ):
         super(LightGCN, self).__init__()
         self.config = config
+        self.dataset = dataset
         self.__init_weight()
 
     def __init_weight(self):
-        self.num_users  = self.dataset.n_users
-        self.num_items  = self.dataset.m_items
-        self.latent_dim = self.config['latent_dim_rec']
-        self.n_layers = self.config['lightGCN_n_layers']
-        self.keep_prob = self.config['keep_prob']
-        self.A_split = self.config['A_split']
+        self.num_users  = self.dataset.num_users
+        self.num_items  = self.dataset.num_items
+        self.latent_dim = self.config['out_dim']
+        self.n_layers = self.config['layer_num']
+        self.keep_prob = self.config['dropout_keep_prob']
         self.embedding_user = torch.nn.Embedding(
             num_embeddings=self.num_users, embedding_dim=self.latent_dim)
         self.embedding_item = torch.nn.Embedding(
@@ -51,15 +52,6 @@ class LightGCN(BasicModel):
         values = values[random_index]/keep_prob
         g = torch.sparse.FloatTensor(index.t(), values, size)
         return g
-    
-    def __dropout(self, keep_prob):
-        if self.A_split:
-            graph = []
-            for g in self.Graph:
-                graph.append(self.__dropout_x(g, keep_prob))
-        else:
-            graph = self.__dropout_x(self.Graph, keep_prob)
-        return graph
     
     def computer(self):
         """
@@ -79,14 +71,7 @@ class LightGCN(BasicModel):
             g_droped = self.Graph    
         
         for layer in range(self.n_layers):
-            if self.A_split:
-                temp_emb = []
-                for f in range(len(g_droped)):
-                    temp_emb.append(torch.sparse.mm(g_droped[f], all_emb))
-                side_emb = torch.cat(temp_emb, dim=0)
-                all_emb = side_emb
-            else:
-                all_emb = torch.sparse.mm(g_droped, all_emb)
+            all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)
         embs = torch.stack(embs, dim=1)
         light_out = torch.mean(embs, dim=1)
@@ -115,5 +100,20 @@ class LightGCN(BasicModel):
         users_emb = all_users[users]
         items_emb = all_items[items]
         inner_pro = torch.mul(users_emb, items_emb)
-        gamma     = torch.sum(inner_pro, dim=1)
+        gamma   = torch.sum(inner_pro, dim=1)
         return gamma
+    
+    def bpr_loss(self, users, pos, neg):
+        (users_emb, pos_emb, neg_emb, 
+        userEmb0,  posEmb0, negEmb0) = self.getEmbedding(users.long(), pos.long(), neg.long())
+        reg_loss = (1/2)*(userEmb0.norm(2).pow(2) + 
+                         posEmb0.norm(2).pow(2)  +
+                         negEmb0.norm(2).pow(2))/float(len(users))
+        pos_scores = torch.mul(users_emb, pos_emb)
+        pos_scores = torch.sum(pos_scores, dim=1)
+        neg_scores = torch.mul(users_emb, neg_emb)
+        neg_scores = torch.sum(neg_scores, dim=1)
+        
+        loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
+        
+        return loss, reg_loss

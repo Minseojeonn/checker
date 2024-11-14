@@ -5,6 +5,7 @@ import os
 from loguru import logger
 import torch
 import json
+from dataloader.utils import convert_list_in_dict_to_tensor
 
 class template(object):
     """
@@ -115,6 +116,19 @@ class template(object):
         self.val_data = val_data
         self.test_data = test_data
 
+    def get_data(self, type, device):
+        """
+        Get the data for training, validation, and test
+        """
+        if type == "train":
+            return convert_list_in_dict_to_tensor(self.train_data, device)
+        elif type == "val":
+            return convert_list_in_dict_to_tensor(self.val_data, device)
+        elif type == "test":
+            return convert_list_in_dict_to_tensor(self.test_data, device)
+        else:
+            raise Exception("Invalid type")
+    
     def data_reindexing(self):
         """
         Reindexing the dataset
@@ -132,6 +146,12 @@ class template(object):
         item_id = {old: new for new, old in enumerate(item_id)}
         self.preprocessed_data['item_id'] = list(map(lambda x : user_id2idx[x], self.preprocessed_data['item_id']))
 
+    def get_all_pos_item(self, user_id):
+        """
+        Get all positive items for a user
+        """
+        return self.user_pos_dict[user_id]
+    
     def create_sparse_graph(self, sign):
         """
         create sparse graph
@@ -147,6 +167,11 @@ class template(object):
         user_dim = torch.LongTensor(self.train_data['user_id'])
         item_dim = torch.LongTensor(self.train_data['item_id'])
         
+        user_pos_dict = {i : [] for i in range(self.num_users)}
+        for u, i in zip(self.train_data["user_id"], self.train_data["item_id"]):
+            user_pos_dict[u].append(i)
+        self.user_pos_dict = user_pos_dict    
+        
         first_sub = torch.stack([user_dim, item_dim+self.num_users])
         second_sub = torch.stack([item_dim+self.num_users, user_dim])
         index = torch.cat([first_sub, second_sub], dim=1)
@@ -154,8 +179,8 @@ class template(object):
             data = torch.cat([self.train_data['sign'], self.train_data['sign']])
         else:
             data = torch.ones(index.size(-1)).int()
-        
-        assert (len(index) == len(data))
+       
+        assert (index.shape[-1] == len(data))
         
         self.Graph = torch.sparse.FloatTensor(index, data, torch.Size([self.num_users+self.num_items, self.num_users+self.num_items]))
         
@@ -178,9 +203,9 @@ class template(object):
         dense = dense / D_sqrt
         dense = dense/D_sqrt.t() 
         index = dense.nonzero()
-        data = dense[dense >= 1e-9 or dense <= -1e-9]
+        data = dense[torch.logical_or(dense >= 1e-9, dense <= -1e-9)]
         assert len(index) == len(data)
-        Graph = torch.sparse.FloatTensor(index.t(), data, torch.Size[[self.num_items+self.num_users, self.num_items+self.num_users]])
+        Graph = torch.sparse.FloatTensor(index.t(), data, torch.Size([self.num_items+self.num_users, self.num_items+self.num_users]))
         self.Graph = Graph.coalesce()
     
     def getSparseGraph(self):
