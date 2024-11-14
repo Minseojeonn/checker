@@ -43,6 +43,14 @@ class movielens_1m(template):
                         'rating': data['rating'].tolist(),
                         'timestamp': data['timestamp'].tolist()
                     }
+        sign = []
+        for i in data_dict['rating']:
+            if i > 3:
+                sign.append(1)
+            else:
+                sign.append(0)
+        data_dict['sign'] = sign
+        
         return data_dict
         
 

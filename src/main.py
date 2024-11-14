@@ -9,7 +9,7 @@ from utils import log_param
 from dataloader.dataset_class import data_adapter
 from loguru import logger
 from models.LightGCN.LightGCN import LightGCN
-from checker.src.models.LightGCN.LightGCN_Trainer import run_lightgcn
+from models.LightGCN.LightgcnTrainer import run_lightgcn
 
 def main(
         model='LightGcn',

@@ -4,6 +4,7 @@ from utils import log_param
 from loguru import logger
 from itertools import chain
 from copy import deepcopy
+from models.LightGCN.LightGCN import LightGCN
 
 class LightgcnTrainer:
     def __init__(
@@ -20,7 +21,7 @@ class LightgcnTrainer:
         self.layer_num = hyper_param['layer_num']
 
         #model init
-        self.model = SDGNN(
+        self.model = LightGCN(
             device=self.device,
             node_num=num_nodes, 
             edge_index_s=train_data.to(self.device),
@@ -35,6 +36,8 @@ class LightgcnTrainer:
         
         #score check
         best_score = 0
+        
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         
         #training phase
         pbar = tqdm(range(self.epochs), leave=False, colour='green', desc='epoch')

@@ -67,25 +67,50 @@ class template(object):
         with open("./dataloader/model_setting.json", "r") as f:
             config_json = json.load(f)
             config_json = config_json[self.model.lower()]
-        indexing_rule = config_json['indexing_rule'] #"bi", "uni"
         using_sign = config_json['using_sign'] #boolean
-        breakpoint()
-        raise NotImplementedError
+        self.data_reindexing()
+        self.data_split()
+        self.create_sparse_graph(using_sign)
+        self.nomalizing_graph()
 
     def data_split(self):
         """
         Split the dataset into train, validation, and test set
         """
         if self.shuffle:
-            self.preprocessed_data = self.preprocessed_data.sample(frac=1, random_state=self.seed).reset_index(drop=True)
+            import random
+            temp_idx = [i for i in range(len(self.preprocessed_data["user_id"]))]
+            random.shuffle(temp_idx)
+            self.preprocessed_data["user_id"] = [self.preprocessed_data["user_id"][idx] for idx in temp_idx]
+            self.preprocessed_data["item_id"] = [self.preprocessed_data["item_id"][idx] for idx in temp_idx]
+            self.preprocessed_data["rating"] = [self.preprocessed_data["rating"][idx] for idx in temp_idx]
+            self.preprocessed_data["timestamp"] = [self.preprocessed_data["timestamp"][idx] for idx in temp_idx]
+            self.preprocessed_data["sign"] = [self.preprocessed_data["sign"][idx] for idx in temp_idx]
         
-        train_size = int(len(self.preprocessed_data) * self.train_ratio)
-        val_size = int(len(self.preprocessed_data) * self.val_ratio)
+        train_size = int(len(self.preprocessed_data["user_id"]) * self.train_ratio)
+        val_size = int(len(self.preprocessed_data["user_id"]) * self.val_ratio)
         
-        train_data = self.preprocessed_data[:train_size]
-        val_data = self.preprocessed_data[train_size:train_size+val_size]
-        test_data = self.preprocessed_data[train_size+val_size:]
-        
+        train_data = {
+            "user_id": self.preprocessed_data["user_id"][:train_size],
+            "item_id": self.preprocessed_data["item_id"][:train_size],
+            "rating": self.preprocessed_data["rating"][:train_size],
+            "timestamp": self.preprocessed_data["timestamp"][:train_size],
+            "sign": self.preprocessed_data["sign"][:train_size]   
+            }
+        val_data = {
+            "user_id": self.preprocessed_data["user_id"][train_size:train_size+val_size],
+            "item_id": self.preprocessed_data["item_id"][train_size:train_size+val_size],
+            "rating": self.preprocessed_data["rating"][train_size:train_size+val_size],
+            "timestamp": self.preprocessed_data["timestamp"][train_size:train_size+val_size],
+            "sign": self.preprocessed_data["sign"][train_size:train_size+val_size]
+            }
+        test_data = {
+            "user_id": self.preprocessed_data["user_id"][train_size+val_size:],
+            "item_id": self.preprocessed_data["item_id"][train_size+val_size:],
+            "rating": self.preprocessed_data["rating"][train_size+val_size:],
+            "timestamp": self.preprocessed_data["timestamp"][train_size+val_size:],
+            "sign": self.preprocessed_data["sign"][train_size+val_size:]
+            }
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
@@ -95,14 +120,68 @@ class template(object):
         Reindexing the dataset
         # user_id, item_id each starts from 0
         """
-        user_id = list(set(self.preprocessed_data['user_id']))
+        user_id = set(self.preprocessed_data['user_id'])
+        self.num_users = len(user_id)
+        user_id = list(user_id)
         user_id2idx = {old: new for new, old in enumerate(user_id)}
         self.preprocessed_data['user_id'] = list(map(lambda x : user_id2idx[x], self.preprocessed_data['user_id']))
 
-        item_id = list(set(self.preprocessed_data['item_id']))
+        item_id = set(self.preprocessed_data['item_id'])
+        self.num_items = len(item_id)
+        item_id = list(item_id)
         item_id = {old: new for new, old in enumerate(item_id)}
         self.preprocessed_data['item_id'] = list(map(lambda x : user_id2idx[x], self.preprocessed_data['item_id']))
 
-
+    def create_sparse_graph(self, sign):
+        """
+        create sparse graph
+        args:
+            sign(boolean):
+                True:
+                    | 0        R |
+                    | R.T      0 |
+                False:
+                    |   0    |R| |
+                    | |R.T|   0  |
+        """
+        user_dim = torch.LongTensor(self.train_data['user_id'])
+        item_dim = torch.LongTensor(self.train_data['item_id'])
+        
+        first_sub = torch.stack([user_dim, item_dim+self.num_users])
+        second_sub = torch.stack([item_dim+self.num_users, user_dim])
+        index = torch.cat([first_sub, second_sub], dim=1)
+        if sign:
+            data = torch.cat([self.train_data['sign'], self.train_data['sign']])
+        else:
+            data = torch.ones(index.size(-1)).int()
+        
+        assert (len(index) == len(data))
+        
+        self.Graph = torch.sparse.FloatTensor(index, data, torch.Size([self.num_users+self.num_items, self.num_users+self.num_items]))
+        
     
+    def nomalizing_graph(self):
+        """
+            Calculate the degree of each node in the graph.
+            Args:
+                graph (torch.sparse): torch.sparse matrix 
+                |  0   R |
+                | R.T  0 |
+            Returns:
+                dict: degree of each node in the graph
+        """
+        
+        dense = self.Graph.to_dense()
+        D = torch.sum(abs(dense), dim=1).float()
+        D[D == 0.] = 1. #avoid division by zero
+        D_sqrt = torch.sqrt(D).unsqueeze(dim=0)
+        dense = dense / D_sqrt
+        dense = dense/D_sqrt.t() 
+        index = dense.nonzero()
+        data = dense[dense >= 1e-9 or dense <= -1e-9]
+        assert len(index) == len(data)
+        Graph = torch.sparse.FloatTensor(index.t(), data, torch.Size[[self.num_items+self.num_users, self.num_items+self.num_users]])
+        self.Graph = Graph.coalesce()
     
+    def getSparseGraph(self):
+        return self.Graph
