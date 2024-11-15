@@ -43,6 +43,13 @@ def main(
     logger.info("The main procedure has started with the following parameters:")
     device = device if torch.cuda.is_available() else 'cpu'
     
+    if using_mlflow:
+            remote_server_uri = "*"
+            mlflow.set_tracking_uri(remote_server_uri)
+            experiment_name = f"{seed}-{model}-{dataset}-{sign}"
+            mlflow.set_experiment(experiment_name)
+            mlflow.start_run()
+
     set_random_seed(seed=seed, device=device)
     param = dict()
     param['model'] = model
@@ -86,11 +93,6 @@ def main(
                     )
 
     if using_mlflow:
-            remote_server_uri = "*"
-            mlflow.set_tracking_uri(remote_server_uri)
-            experiment_name = f"{seed}-{model}-{dataset}-{sign}"
-            mlflow.set_experiment(experiment_name)
-            mlflow.start_run()
             mlflow.log_params(param)
             mlflow.log_params(hyper_param)
 
