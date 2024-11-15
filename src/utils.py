@@ -6,6 +6,7 @@ import torch
 from loguru import logger
 from sklearn.metrics import roc_auc_score
 import multiprocessing
+import mlflow
 
 def set_random_seed(seed, device):
     # for reproducibility (always not guaranteed in pytorch)
@@ -171,3 +172,41 @@ def NDCGatK_r(test_data, recommended_indices, k):
         ndcgs.append(ndcg)
 
     return sum(ndcgs) / len(ndcgs)
+
+
+#------------------------------------------------mlflow-logger-------------------------------------------------
+
+def logging_with_mlflow_metric(test, valid):
+    # metric selected by valid score
+    best_recall, best_precision, best_ndcg = -float('inf'), -float('inf'), -float('inf')
+    best_recall_epoch, best_precision_epoch, best_ndcg_epoch = -1, -1, -1
+    
+    for idx in range(len(test["recall"])):
+        if valid["recall"][idx] > best_recall:
+            best_recall = valid["recall"][idx]
+            best_recall_epoch = idx
+        if valid["precision"][idx] > best_precision:
+            best_precision = valid["precision"][idx]
+            best_precision_epoch = idx
+        if valid["ndcg"][idx] > best_ndcg:
+            best_ndcg = valid["ndcg"][idx]
+            best_ndcg_epoch = idx
+        metrics_dict = {
+            "test_recall": test["recall"][idx],
+            "test_precision": test["precision"][idx],
+            "test_ndcg": test["ndcg"][idx],
+            "valid_recall": valid["recall"][idx],
+            "valid_precision": valid["precision"][idx],
+            "valid_ndcg": valid["ndcg"][idx]
+        }
+        mlflow.log_metrics(metrics_dict, synchronous=False, step=idx)
+
+    best_metrics_dict = {
+        "best_recall_test" : test["recall"][best_recall_epoch],
+        "best_precision_test" : test["precision"][best_precision_epoch],
+        "best_ndcg_test" : test["ndcg"][best_ndcg_epoch],
+        "best_recall_valid" : valid["recall"][best_recall_epoch],
+        "best_precision_valid" : valid["precision"][best_precision_epoch],
+        "best_ndcg_valid" : valid["ndcg"][best_ndcg_epoch]
+        }
+    mlflow.log_metrics(best_metrics_dict, synchronous=True)

@@ -25,7 +25,8 @@ class movielens_1m(template):
             shuffle=param["shuffle"],
             seed=param["seed"],
             device=param["device"],
-            model=param["model"]
+            model=param["model"],
+            sign=param["sign"]
         )
         
     def data_preprocessing(self):

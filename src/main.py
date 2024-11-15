@@ -10,6 +10,7 @@ from dataloader.dataset_class import data_adapter
 from loguru import logger
 from models.LightGCN.LightGCN import LightGCN
 from models.LightGCN.LightgcnTrainer import run_lightgcn
+import mlflow
 
 def main(
         model='LightGcn',
@@ -24,9 +25,10 @@ def main(
         train_ratio=0.8,
         val_ratio=0.1,
         test_ratio=0.1,
-        dropout_keep_prob=0.6,
         shuffle=True,
-        batch_size=300000
+        batch_size=300000,
+        using_mlflow = False,
+        sign = True
     ):
     """
     Handle user arguments of ml-project-template
@@ -49,6 +51,7 @@ def main(
     param['dataset'] = dataset
     param['split_ratio'] = [train_ratio, val_ratio, test_ratio]
     param['shuffle'] = shuffle
+    param['sign'] = sign
 
 
     log_param(param)
@@ -82,8 +85,14 @@ def main(
                         hyper_param=hyper_param
                     )
 
-
-
+    if using_mlflow:
+            remote_server_uri = "*"
+            mlflow.set_tracking_uri(remote_server_uri)
+            experiment_name = f"{seed}-{model}-{dataset}-{sign}"
+            mlflow.set_experiment(experiment_name)
+            mlflow.start_run()
+            mlflow.log_params(param)
+            mlflow.log_params(hyper_param)
 
 if __name__ == "__main__":
     sys.exit(fire.Fire(main))

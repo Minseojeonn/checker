@@ -20,7 +20,8 @@ class template(object):
             shuffle,
             seed,
             device,
-            model
+            model,
+            sign
     ) -> None:
         self.dataset_name = dataset_name
         self.train_ratio = train_ratio
@@ -30,6 +31,7 @@ class template(object):
         self.shuffle = shuffle
         self.device = device
         self.model = model
+        self.sign = sign
 
         if self.val_ratio + self.train_ratio + self.test_ratio != 1:
             raise Exception("sum of (train,val,test) ratio is not 1")
@@ -65,10 +67,7 @@ class template(object):
 
     def processing(self): #processing data for oveall dataset 
         
-        with open("./dataloader/model_setting.json", "r") as f:
-            config_json = json.load(f)
-            config_json = config_json[self.model.lower()]
-        using_sign = config_json['using_sign'] #boolean
+        using_sign = self.sign #boolean
         self.data_reindexing()
         self.data_split()
         self.create_sparse_graph(using_sign)
