@@ -40,6 +40,7 @@ class LightGCN(BasicModel):
             num_embeddings=self.num_items, embedding_dim=self.latent_dim)
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph().to(self.config['device'])
+        breakpoint()
 
     def computer(self):
         """
@@ -50,7 +51,6 @@ class LightGCN(BasicModel):
         all_emb = torch.cat([users_emb, items_emb])
         embs = [all_emb]
         g_droped = self.Graph    
-        
         for layer in range(self.n_layers):
             all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)

@@ -52,7 +52,7 @@ class template(object):
         """
         Load dataset from file
         """
-        preprocessed_data_name = f"./processed_data/{self.dataset_name}.pkl"
+        preprocessed_data_name = f"./processed_data/{self.dataset_name}-{self.sign}.pkl"
         if os.path.isfile(preprocessed_data_name): #file exists
             logger.info("Preprocessed data exists")
             self.preprocessed_data = pickle.load(open(preprocessed_data_name, "rb"))

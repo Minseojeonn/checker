@@ -49,7 +49,7 @@ class movielens_1m(template):
             if i > 3:
                 sign.append(1)
             else:
-                sign.append(0)
+                sign.append(-1)
         data_dict['sign'] = sign
         
         return data_dict
