@@ -26,7 +26,7 @@ def main(
         test_ratio=0.1,
         dropout_keep_prob=0.6,
         shuffle=True,
-        batch_size=1024
+        batch_size=300000
     ):
     """
     Handle user arguments of ml-project-template
@@ -69,7 +69,7 @@ def main(
     hyper_param['layer_num'] = layer_num
     hyper_param['batch_size'] = batch_size
     hyper_param['device'] = device
-    hyper_param['Ks'] = [5, 10, 15, 20]
+    hyper_param['Ks'] = [5]
     log_param(hyper_param)
 
     #eval
@@ -77,15 +77,12 @@ def main(
     if model.lower() not in model_dict:
         raise Exception("not supported model.")
     
-    test_recall, test_hit = model_dict[model.lower()](
+    model, val_dict, test_dict = model_dict[model.lower()](
                         dataset=loaded_data,
                         hyper_param=hyper_param
                     )
 
 
-
-    # Step 3. Report and save the final results
-    logger.info("The model has been trained. The test recall is {:.4}. / hit is {:.4}".format(test_recall, test_hit))
 
 
 if __name__ == "__main__":

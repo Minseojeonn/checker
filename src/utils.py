@@ -103,12 +103,13 @@ def batch_uniform_random_sampling_optimized(user_ids, user_interactions, num_ite
             new_pos_items.extend([pos_item] * num_samples)
             new_neg_items.extend(batch_negative_samples[user_id])
     
+    length = len(new_user_ids)
     # Torch tensor로 변환
     new_pos_items = torch.LongTensor(new_pos_items)
     new_neg_items = torch.LongTensor(new_neg_items)
     new_user_ids = torch.LongTensor(new_user_ids)
     
-    return new_user_ids, new_pos_items, new_neg_items
+    return new_user_ids, new_pos_items, new_neg_items, length
 
 
 

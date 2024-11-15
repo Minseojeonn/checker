@@ -11,7 +11,7 @@ class LightgcnTrainer:
         ):
         pass
 
-    def test(test_data, model, Ks, seen_items):
+    def test(self, test_data, model, Ks, seen_items):
         """
         Test the performance of a trained model on test data
         """
@@ -21,7 +21,7 @@ class LightgcnTrainer:
             recalls = []
             precisions = []
             ndcgs = []
-            rating_map = model.get_users_rating(test_users)
+            rating_map = model.getUsersRating(test_users)
             
             for i, user in enumerate(test_users):
                 if user in seen_items:
@@ -76,9 +76,8 @@ class LightgcnTrainer:
         }
 
         for epoch in range(self.epochs):
-            new_user_ids, new_pos_items, new_neg_items = batch_uniform_random_sampling_optimized(train_data["user_id"].cpu().numpy().tolist(), dataset.get_all_pos_item(), dataset.num_items, num_samples=1)
+            new_user_ids, new_pos_items, new_neg_items, length = batch_uniform_random_sampling_optimized(train_data["user_id"].cpu().numpy().tolist(), dataset.get_all_pos_item(), dataset.num_items, num_samples=1)
             self.model.train()
-            print(epoch)
             for (batch_i,
                 (batch_users,
                 batch_pos,
@@ -97,29 +96,25 @@ class LightgcnTrainer:
             val_dict["recall"].append(recall)
             val_dict["precision"].append(precision)
             val_dict["ndcg"].append(ndcg)
-            
-        
             test_recall, test_precision, test_ndcg = self.test(dataset.get_data("test", self.device), self.model, self.Ks, dataset.get_all_pos_item())
             test_dict["recall"].append(test_recall)
             test_dict["precision"].append(test_precision)
             test_dict["ndcg"].append(test_ndcg)
-            
             #save best model
             if best_score < recall:
                 best_score = recall
                 best_model = deepcopy(self.model.state_dict())
-        
-        return best_model
+        return best_model, val_dict, test_dict
     
 
     
 def run_lightgcn(dataset, hyper_param):
     #trainer
     trainer = LightgcnTrainer()
-    model = trainer.train_with_hyper_param(
+    model, val_dict, test_dict = trainer.train_with_hyper_param(
         dataset=dataset,
         hyper_param=hyper_param
         ).to(hyper_param['device'])
     
-    return model
+    return model, val_dict, test_dict
 
