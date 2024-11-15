@@ -1,0 +1,42 @@
+2024-11-15 04:18:35.943 | INFO     | __main__:main:43 - The main procedure has started with the following parameters:
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - model               :                                          LightGcn
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - seed                :                                                 1
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - device              :                                            cuda:0
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - dataset             :                                             ml-1m
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - split_ratio         :                                   [0.8, 0.1, 0.1]
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - shuffle             :                                              True
+2024-11-15 04:18:36.079 | INFO     | utils:log_param:33 - sign                :                                              True
+2024-11-15 04:18:36.079 | INFO     | dataloader.template:load_dataset:57 - Preprocessed data exists
+/home/minseo/back_up_3/checker/src/dataloader/template.py:183: UserWarning: torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Please use torch.sparse_coo_tensor(indices, values, shape, dtype=, device=). (Triggered internally at /opt/conda/conda-bld/pytorch_1708025845206/work/torch/csrc/utils/tensor_new.cpp:618.)
+  self.Graph = torch.sparse.FloatTensor(index, data, torch.Size([self.num_users+self.num_items, self.num_users+self.num_items]))
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/minseo/back_up_3/checker/src/main.py", line 100, in <module>
+    sys.exit(fire.Fire(main))
+             ^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 143, in Fire
+    component_trace = _Fire(component, args, parsed_flag_args, context, name)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 477, in _Fire
+    component, remaining_args = _CallAndUpdateTrace(
+                                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 693, in _CallAndUpdateTrace
+    component = fn(*varargs, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/back_up_3/checker/src/main.py", line 70, in main
+    loaded_data = data_adapter(dataset.lower())(param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/back_up_3/checker/src/dataloader/dataset_class.py", line 20, in __init__
+    super(movielens_1m, self).__init__(
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 39, in __init__
+    self.processing()
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 73, in processing
+    self.create_sparse_graph(using_sign)
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 183, in create_sparse_graph
+    self.Graph = torch.sparse.FloatTensor(index, data, torch.Size([self.num_users+self.num_items, self.num_users+self.num_items]))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cpu and cuda:0! (when checking argument for argument values in method wrapper_SparseCUDA___sparse_coo_tensor_with_dims_and_tensors)
+2024/11/15 04:18:37 INFO mlflow.tracking._tracking_service.client: 🏃 View run upset-rook-728 at: http://192.168.50.2:5001/#/experiments/2/runs/9cac98ab53894e09aa50bb153d5c4bcf.
+2024/11/15 04:18:37 INFO mlflow.tracking._tracking_service.client: 🧪 View experiment at: http://192.168.50.2:5001/#/experiments/2.
+srun: error: node1: task 0: Exited with exit code 1

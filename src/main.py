@@ -5,7 +5,7 @@ import fire
 import torch
 from pathlib import Path
 from utils import set_random_seed
-from utils import log_param
+from utils import log_param, logging_with_mlflow_metric
 from dataloader.dataset_class import data_adapter
 from loguru import logger
 from models.LightGCN.LightGCN import LightGCN
@@ -15,7 +15,7 @@ import mlflow
 def main(
         model='LightGcn',
         seed=1,
-        epochs=100,
+        epochs=1,
         learning_rate=0.001,
         device='cuda:0',
         dataset="ml-1m",
@@ -28,7 +28,7 @@ def main(
         shuffle=True,
         batch_size=300000,
         using_mlflow = False,
-        sign = True
+        sign = False
     ):
     """
     Handle user arguments of ml-project-template
@@ -95,6 +95,6 @@ def main(
     if using_mlflow:
             mlflow.log_params(param)
             mlflow.log_params(hyper_param)
-
+            logging_with_mlflow_metric(test_dict, val_dict)
 if __name__ == "__main__":
     sys.exit(fire.Fire(main))

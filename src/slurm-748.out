@@ -1,0 +1,41 @@
+2024-11-15 04:15:24.584 | INFO     | __main__:main:43 - The main procedure has started with the following parameters:
+2024/11/15 04:15:24 INFO mlflow.tracking.fluent: Experiment with name '1-LightGcn-ml-1m-True' does not exist. Creating a new experiment.
+2024-11-15 04:15:24.797 | INFO     | utils:log_param:33 - model               :                                          LightGcn
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - seed                :                                                 1
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - device              :                                            cuda:0
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - dataset             :                                             ml-1m
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - split_ratio         :                                   [0.8, 0.1, 0.1]
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - shuffle             :                                              True
+2024-11-15 04:15:24.798 | INFO     | utils:log_param:33 - sign                :                                              True
+2024-11-15 04:15:24.798 | INFO     | dataloader.template:load_dataset:57 - Preprocessed data exists
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/minseo/back_up_3/checker/src/main.py", line 100, in <module>
+    sys.exit(fire.Fire(main))
+             ^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 143, in Fire
+    component_trace = _Fire(component, args, parsed_flag_args, context, name)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 477, in _Fire
+    component, remaining_args = _CallAndUpdateTrace(
+                                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/anaconda3/envs/dvg/lib/python3.12/site-packages/fire/core.py", line 693, in _CallAndUpdateTrace
+    component = fn(*varargs, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/back_up_3/checker/src/main.py", line 70, in main
+    loaded_data = data_adapter(dataset.lower())(param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minseo/back_up_3/checker/src/dataloader/dataset_class.py", line 20, in __init__
+    super(movielens_1m, self).__init__(
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 39, in __init__
+    self.processing()
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 73, in processing
+    self.create_sparse_graph(using_sign)
+  File "/home/minseo/back_up_3/checker/src/dataloader/template.py", line 177, in create_sparse_graph
+    data = torch.cat([torch.tensor.LongTensor(self.train_data['sign']).to(self.device) ,torch.tensor.LongTensor(self.train_data['sign']).to(self.device)])
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'builtin_function_or_method' object has no attribute 'LongTensor'
+2024/11/15 04:15:26 INFO mlflow.tracking._tracking_service.client: 🏃 View run ambitious-doe-71 at: http://192.168.50.2:5001/#/experiments/2/runs/31191eda5a51437d8ed3697499b1e2cc.
+2024/11/15 04:15:26 INFO mlflow.tracking._tracking_service.client: 🧪 View experiment at: http://192.168.50.2:5001/#/experiments/2.
+srun: error: node1: task 0: Exited with exit code 1

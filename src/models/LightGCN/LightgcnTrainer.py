@@ -114,7 +114,7 @@ def run_lightgcn(dataset, hyper_param):
     model, val_dict, test_dict = trainer.train_with_hyper_param(
         dataset=dataset,
         hyper_param=hyper_param
-        ).to(hyper_param['device'])
+        )
     
     return model, val_dict, test_dict
 

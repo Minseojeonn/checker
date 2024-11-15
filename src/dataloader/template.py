@@ -174,7 +174,7 @@ class template(object):
         second_sub = torch.stack([item_dim+self.num_users, user_dim])
         index = torch.cat([first_sub, second_sub], dim=1)
         if sign:
-            data = torch.cat([self.train_data['sign'], self.train_data['sign']])
+            data = torch.cat([torch.LongTensor(self.train_data['sign']) ,torch.LongTensor(self.train_data['sign'])])
         else:
             data = torch.ones(index.size(-1)).int()
        
